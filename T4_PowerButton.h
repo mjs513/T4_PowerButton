@@ -21,20 +21,68 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+/* Notes to self
+ * ITCM starts at address: 0x00000000
+ * DTCM Starts at address: 0x20000000
+ * OCRAM2 starts at address: 0x20200000
+ * Flash(FlexSPI) : 0x60000000
+*/
+
+#if !defined(ARDUINO_TEENSY40) && !defined(ARDUINO_TEENSY41) && !defined(ARDUINO_TEENSY_MICROMOD)
+#error "This board is not supported."
+#endif
 
 #if !defined(T4PowerButton)
 #define T4PowerButton
 
-#include "Arduino.h"
+#include <Arduino.h>
+
+// #define SHOW_HARDFAULTS	 	// undef this, if not needed.
+#define HARDFAULTSOUT Serial	// Output device for Hardfaults
+
+enum arm_power_button_debounce {
+	arm_power_button_debounce_0ms = 3,	//No debounce
+	arm_power_button_debounce_50ms = 0,	//50ms debounce (default)
+	arm_power_button_debounce_100ms = 1,	//100ms debounce
+	arm_power_button_debounce_500ms = 2	//500ms debounce
+};
+
+enum arm_power_button_press_time_emergency {
+	arm_power_button_press_time_emergency_5sec = 0,
+	arm_power_button_press_time_emergency_10sec = 1,
+	arm_power_button_press_time_emergency_15sec = 2,
+	arm_power_button_press_time_emergency_off = 3
+};
+
+enum arm_power_button_press_on_time {		//Time to switch on
+	arm_power_button_press_on_time_0ms = 3,
+	arm_power_button_press_on_time_50ms = 1,
+	arm_power_button_press_on_time_100ms = 2,
+	arm_power_button_press_on_time_500ms = 0
+};
+
+enum callback_ex_action {
+	callback_ex_action_poweroff = 1,
+	callback_ex_action_poweroff_cancel = 0,
+	callback_ex_action_poweroff_keeparmed = 2
+};
 
 void arm_reset(void); // reset
 void arm_power_down(void); //switch off
 void set_arm_power_button_callback(void (*fun_ptr)(void));
-void arm_enable_nvram(void) { SNVS_LPCR |= (1 << 24); }
+void set_arm_power_button_callback_ex(callback_ex_action (*fun_ptr)(void));
+void set_arm_power_button_debounce(arm_power_button_debounce debounce);
+void set_arm_power_button_press_time_emergency(arm_power_button_press_time_emergency emg);
+void set_arm_power_button_press_on_time(arm_power_button_press_on_time ontime);
+void rearm_power_button_callback(void);
+void arm_enable_nvram(void);
 
 bool arm_power_button_pressed(void);
-unsigned memfree(void);
+
+unsigned memfree(void); //free stack / global variable space
+unsigned heapfree(void); //heap heap space
+void progInfo(void); //display file + vesion info
 void flexRamInfo(void);
-unsigned long maxstack(void);
+unsigned long maxstack(void); //maximal stack usage
 
 #endif
